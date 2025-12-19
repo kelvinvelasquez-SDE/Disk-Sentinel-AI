@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disk Sentinel AI | Server Grade</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --accent: #f43f5e;
+            --cyan: #06b6d4;
+            --bg-deep: #030712;
+            --glass-strong: rgba(17, 24, 39, 0.85);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-deep);
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030712 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Dynamic Grid for Disks */
+        .disk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .glass-card {
+            background: var(--glass-strong);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .glass-card:hover,
+        .glass-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .disk-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .disk-mount {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .progress-bg {
+            background: rgba(255, 255, 255, 0.1);
+            height: 6px;
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--primary));
+            transition: width 0.5s;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Chart Area */
+        .chart-container {
+            background: var(--glass-strong);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+
+        .prediction-box {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--cyan);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Disk Sentinel AI | Server</div>
+            <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 15px;">
+                <span>Live Monitoring</span>
+                <button onclick="openSettings()"
+                    style="background:none; border:none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Dynamic Disk List -->
+        <h3 style="margin-bottom: 15px; font-weight: 500;">Discos Detectados</h3>
+        <div class="disk-grid" id="diskGrid">
+            <!-- Cards injected by JS -->
+        </div>
+
+        <!-- Details for Selected Disk -->
+        <div class="chart-container">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <h3 id="chartTitle">Selecciona un disco</h3>
+                <div id="aiPrediction">...</div>
+            </div>
+            <canvas id="mainChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal"
+        style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-card" style="width: 400px; max-width: 90%;">
+            <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Configuración
+            </h3>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; color: var(--text-muted); margin-bottom: 5px;">Correo de Alertas</label>
+                <input type="email" id="alertEmail" placeholder="admin@empresa.com"
+                    style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; border-radius: 8px;">
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <label style="display:block; color: var(--text-muted); margin-bottom: 5px;">Umbral Crítico (%)</label>
+                <input type="number" id="critThreshold" min="1" max="99"
+                    style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; border-radius: 8px;">
+                <input type="range" id="critRange" min="1" max="99" style="width: 100%; margin-top: 10px;"
+                    oninput="document.getElementById('critThreshold').value = this.value">
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeSettings()"
+                    style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: #fff; cursor: pointer;">Cancelar</button>
+                <button onclick="saveSettings()"
+                    style="padding: 10px 20px; border-radius: 8px; border: none; background: var(--primary); color: #fff; cursor: pointer; font-weight: 600;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMount = null;
+        let mainChart = null;
+
+        // Init Chart
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        mainChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], datasets: [{
+                    data: [], borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, max: 100, grid: { color: '#333' } }, x: { grid: { display: false } } }
+            }
+        });
+
+        async function updateDashboard() {
+            try {
+                // 1. Get Disks
+                const res = await fetch('/api/current');
+                const data = await res.json();
+                const disks = data.disks;
+
+                const grid = document.getElementById('diskGrid');
+                grid.innerHTML = ''; // Clear current
+
+                // If no current selected, select first
+                if (!currentMount && disks.length > 0) {
+                    currentMount = disks[0].mountpoint;
+                    updateDetails(currentMount);
+                }
+
+                disks.forEach(d => {
+                    // Create Card
+                    const card = document.createElement('div');
+                    card.className = `glass-card ${d.mountpoint === currentMount ? 'active' : ''}`;
+                    card.onclick = () => { currentMount = d.mountpoint; updateDetails(d.mountpoint); updateDashboard(); };
+
+                    const percent = d.used_percent;
+                    let color = 'var(--primary)';
+                    if (percent > 85) color = 'var(--accent)';
+
+                    card.innerHTML = `
+                        <div class="disk-header">
+                            <span>${d.device}</span>
+                            <span style="color:${color}">${percent}%</span>
+                        </div>
+                        <div class="disk-mount">Montaje: ${d.mountpoint} (${d.fstype})</div>
+                        <div class="progress-bg">
+                            <div class="progress-fill" style="width: ${percent}%; background: ${color}"></div>
+                        </div>
+                        <div class="stats-row">
+                            <span>Usado: ${d.used_gb} GB</span>
+                            <span>Libre: ${d.free_gb} GB</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateDetails(mountpoint) {
+            document.getElementById('chartTitle').innerText = `Histórico: ${mountpoint}`;
+
+            // Get History
+            const histRes = await fetch(`/api/history?mountpoint=${encodeURIComponent(mountpoint)}`);
+            const history = await histRes.json();
+
+            mainChart.data.labels = history.slice(-50).map(h => new Date(h.timestamp).toLocaleTimeString());
+            mainChart.data.datasets[0].data = history.slice(-50).map(h => h.used_percent);
+            mainChart.update();
+
+            // Get Prediction
+            const predRes = await fetch(`/api/prediction?mountpoint=${encodeURIComponent(mountpoint)}`);
+            const pred = await predRes.json();
+
+            const aiDiv = document.getElementById('aiPrediction');
+            if (pred.exhaustion_date) {
+                const date = new Date(pred.exhaustion_date).toLocaleDateString();
+                aiDiv.innerHTML = `<span style="color: var(--accent)">⚠️ Agotamiento estimado: ${date}</span>`;
+            } else {
+                aiDiv.innerHTML = `<span style="color: var(--cyan)">🛡️ IA: ${pred.message || 'Estable'}</span>`;
+            }
+        }
+
+        setInterval(updateDashboard, 5000);
+        updateDashboard();
+
+        // Settings Logic
+        const modal = document.getElementById('settingsModal');
+        const emailInput = document.getElementById('alertEmail');
+        const threshInput = document.getElementById('critThreshold');
+        const rangeInput = document.getElementById('critRange');
+
+        function openSettings() {
+            modal.style.display = 'flex';
+            fetch('/api/settings')
+                .then(r => r.json())
+                .then(data => {
+                    emailInput.value = data.alert_email || '';
+                    threshInput.value = data.critical_threshold;
+                    rangeInput.value = data.critical_threshold;
+                });
+        }
+
+        function closeSettings() {
+            modal.style.display = 'none';
+        }
+
+        function saveSettings() {
+            const data = {
+                alert_email: emailInput.value,
+                critical_threshold: threshInput.value
+            };
+
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(r => r.json())
+                .then(res => {
+                    alert('Configuración guardada correctamente');
+                    closeSettings();
+                })
+                .catch(err => alert('Error al guardar'));
+        }
+
+        // Sync inputs
+        threshInput.addEventListener('input', (e) => rangeInput.value = e.target.value);
+    </script>
+</body>
+
+</html>

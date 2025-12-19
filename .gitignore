@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Build Artifacts
+build/
+dist/
+*.spec
+*.exe
+
+# IDMS Specific
+config.json
+*.log
+disk_history.csv
+DiskSentinel
+server.log
+
+# System
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temp Tools
+gh_cli.tar.gz
+gh_*

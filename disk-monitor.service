@@ -1,0 +1,12 @@
+[Unit]
+Description=Disk Sentinel AI Monitor
+After=network.target
+
+[Service]
+User=kerubinzero
+WorkingDirectory=/home/kerubinzero/Desarrollos/Monitoreo Espacio Disco
+ExecStart=/home/kerubinzero/Desarrollos/Monitoreo Espacio Disco/venv/bin/python3 /home/kerubinzero/Desarrollos/Monitoreo Espacio Disco/run.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
