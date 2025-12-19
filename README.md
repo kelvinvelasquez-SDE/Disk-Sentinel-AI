@@ -67,9 +67,13 @@ Built with a focus on performance and reliability.
 
 ## 📸 Screenshots
 
-*(Add your screenshots here)*
+![Disk Sentinel Dashboard](screenshots/dashboard.png)
+*Real-time monitoring of multiple partitions*
+
+![Configuration Modal](screenshots/settings.png)
+*Intuitive settings for critical thresholds and alerts*
 
 ---
 
-**Developed with ❤️ by [Your Name/Antigravity]**
+**Developed with ❤️ by Kelvin Velasquez**
 *Empowering infrastructure with Intelligence.*
